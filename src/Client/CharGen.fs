@@ -169,10 +169,13 @@ let recomputeLevelDependentProperties (sb : StatBlock) =
         function
           KeyValue(classId, level) ->
             let hp =
-              level * (classHp classId + conMod) +
-                (if actualLevels.Head.Id = classId then classHp classId - 2 else 0)
+              level * (classHp classId + conMod)
+                //+(if actualLevels.Head.Id = classId then classHp classId - 2 else 0)
             hp
         )
+  let hp = match actualLevels with
+    | baseClass::_ -> hp + (classHp (baseClass.Id) - 2)
+    | _ -> hp
   let retval = {
     sb with
         HP = hp
