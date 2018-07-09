@@ -17,13 +17,14 @@ open Fulma.Elements.Form
 open Fulma.Extra.FontAwesome
 open Fulma.Components
 open Fulma.BulmaClasses
+open ViewHelpers
 open Froggy
 open Froggy.Dnd5e
 open Shared
 open Froggy.Dnd5e.CharGen
 open Froggy.Common
 open Froggy.Packrat
-open ViewHelpers
+open Froggy.Dnd5e.Data
 
 /// The overall data model driving the view.
 type Model =
@@ -34,29 +35,37 @@ type Model =
 /// The different types of messages in the system.
 type Msg =
     | InputChanged of string
-    | OutputChanged of string
     | ExecuteCommand of string
 
 /// The init function is called to start the message pump with an initial view.
 let init () =
     { Input = "";
-    Output = "";
-    GameState = Data.State.Empty
+    Output = "OUTPUT goes here";
+    GameState = { Current = None; Party = [] }
     }
       , Cmd.ofMsg(ExecuteCommand "rollstats")
 
 let random = System.Random()
-let roll = Data.resolve <| fun x -> 1 + random.Next(x)
-let io: (IO<_>) = { load = (thunk1 failwith "Not implemented"); save = thunk2 failwith "Not implemented" }
+let roll = resolve <| fun x -> 1 + random.Next(x)
+let io: (IO<StatBlock>) = { load = (thunk1 failwith "Not implemented"); save = thunk2 failwith "Not implemented" }
 /// The update function knows how to update the model given a message.
 let update msg model =
     match msg with
     | InputChanged msg -> { model with Input = msg }, Cmd.none
-    | OutputChanged msg -> { model with Output = msg }, Cmd.none
     | ExecuteCommand cmd ->
+      printfn "Executing '%s'" cmd
       let cmds = CharGen.parse (ParseContext.Init cmd)
-      let state = CharGen.update io roll cmds model.GameState
-      { model with Output = CharGen.view state; GameState = state }, Cmd.none
+      printfn "%A" cmds
+      match cmds with
+      | [] ->
+        printfn "Could not parse %s" cmd
+        {
+          model with Output = sprintf "Could not parse %s" cmd
+          }, Cmd.none
+      | cmds ->
+        let state = CharGen.update io roll cmds model.GameState
+        printfn "New state: %s" (CharGen.view state)
+        { model with Output = CharGen.view state; GameState = state }, Cmd.none
 
 //[<AutoOpen>]
 //module ViewParts =
@@ -144,7 +153,7 @@ let view (model:Model) dispatch =
                             [ Input.Placeholder "Ex: rollstats"
                               Input.Value model.Input
                               Input.Color (if (model:Model).GameState.Current.IsSome then Color.IsDanger else Color.IsSuccess)
-                              Input.Props [ OnChange (fun ev -> dispatch (InputChanged !!ev.target?value)); onKeyDown KeyCode.enter (fun _ -> dispatch <| (ExecuteCommand model.Input)) ] ]
+                              Input.Props [ OnChange (fun ev -> dispatch (InputChanged !!ev.target?value)); onKeyDown KeyCode.enter (fun _ -> dispatch (ExecuteCommand model.Input)) ] ]
                         Icon.faIcon [ Icon.Size IsSmall; Icon.IsLeft ] [ Fa.icon Fa.I.Building ]
                         (match model with
                          | { GameState = { Current = Some _ } } -> Icon.faIcon [ Icon.Size IsSmall; Icon.IsRight ] [ Fa.icon Fa.I.Exclamation ]
@@ -162,7 +171,10 @@ let view (model:Model) dispatch =
                                 Button.button
                                     [ Button.IsFullwidth
                                       Button.Color IsPrimary
-                                      Button.OnClick (fun _ -> dispatch (ExecuteCommand model.Input))
+                                      Button.OnClick (fun _ ->
+                                          printfn "Clicked!"
+                                          printfn "%s" model.Input
+                                          dispatch (ExecuteCommand model.Input))
                                       //Button.Disabled (model.ValidationError.IsSome)
                                       //Button.IsLoading (model.ServerState = ServerState.Loading)
                                       ]

@@ -87,8 +87,6 @@ type State = {
     Current: int option
     Party: StatBlock list
   }
-  with
-  static member Empty = { Current = None; Party = [] }
 
 type PCXP = { Level: int; XPRequired: int }
   with
