@@ -20,7 +20,6 @@ open Fulma.BulmaClasses
 open ViewHelpers
 open Froggy
 open Froggy.Dnd5e
-open Shared
 open Froggy.Dnd5e.CharGen
 open Froggy.Common
 open Froggy.Packrat
@@ -41,7 +40,7 @@ type Msg =
 let init () =
     { Input = "";
     Output = "OUTPUT goes here";
-    GameState = { Current = None; Party = [] }
+    GameState = StateEmpty
     }
       , Cmd.ofMsg(ExecuteCommand "rollstats")
 

@@ -120,7 +120,7 @@ let parse input =
 
 module Prop =
   let Current = Lens.lens
-                  (function { Current = Some(v); Party = P } -> P.[v] | { Current = None } -> StatBlock.Empty)
+                  (function { Current = Some(v); Party = P } -> P.[v] | { Current = None } -> StatBlockEmpty)
                   (fun v state  -> match state with
                                     | { Current = Some(ix); Party = P } -> { state with Party = P |> List.mapi (fun i v' -> if i = ix then v else v') }
                                     | _ -> { state with Current = Some 0; Party = [v] }
@@ -231,14 +231,13 @@ type IO<'t> =
     save: string -> 't -> unit
     load: string -> 't option
   }
-
 let update (io: IO<_>) roll cmds state =
   let mutable state = state
   for cmd in cmds do
     state <-
       let hasCurrent = state.Current.IsSome
       match cmd with
-      | NewContext -> { State.Empty with Current = Some 0; Party = [StatBlock.Empty] }
+      | NewContext -> { StateEmpty with Current = Some 0; Party = [StatBlockEmpty] }
       | SetName v when hasCurrent ->
           state |> Lens.over Prop.Current (fun st -> { st with Name = v })
       | RollStats when hasCurrent->
@@ -364,7 +363,7 @@ let update (io: IO<_>) roll cmds state =
   state
 
 type StatBank(roll) =
-  let mutable state = { State.Empty with Current = Some 0; Party = [StatBlock.Empty] }
+  let mutable state = { StateEmpty with Current = Some 0; Party = [StatBlockEmpty] }
   member val UpdateStatus = (fun (str: string) -> ()) with get, set
   member val IO = { save = (fun _ _ -> failwith "Not supported"); load = (fun _ -> failwith "Not supported") } with get, set
   member this.Execute(cmds: Command list) =

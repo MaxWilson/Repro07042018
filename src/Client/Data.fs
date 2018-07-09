@@ -62,8 +62,7 @@ type StatBlock = {
     Subclasses: (ClassId * string) list
     Notes: string list
   }
-  with
-  static member Empty = {
+let StatBlockEmpty = {
     Name = "Unnamed"
     Stats =
       {
@@ -87,6 +86,7 @@ type State = {
     Current: int option
     Party: StatBlock list
   }
+let StateEmpty = { Current = None; Party = [] }
 
 type PCXP = { Level: int; XPRequired: int }
   with
