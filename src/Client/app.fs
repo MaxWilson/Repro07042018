@@ -55,16 +55,19 @@ let update msg model =
       printfn "Executing '%s'" cmd
       let cmds = CharGen.parse (ParseContext.Init cmd)
       printfn "%A" cmds
-      match cmds with
-      | [] ->
-        printfn "Could not parse %s" cmd
-        {
-          model with Output = sprintf "Could not parse %s" cmd
-          }, Cmd.none
-      | cmds ->
-        let state = CharGen.update io roll cmds model.GameState
-        printfn "New state: %s" (CharGen.view state)
-        { model with Output = CharGen.view state; GameState = state }, Cmd.none
+      try
+        match cmds with
+        | [] ->
+          printfn "Could not parse %s" cmd
+          {
+            model with Output = sprintf "Could not parse %s" cmd
+            }, Cmd.none
+        | cmds ->
+          let state = CharGen.update io roll cmds model.GameState
+          printfn "New state: %s" (CharGen.view state)
+          { model with Output = CharGen.view state; GameState = state }, Cmd.none
+      with e ->
+        { model with Output = sprintf "Error '%A'\nwhile executing %A" e cmds }, Cmd.none
 
 //[<AutoOpen>]
 //module ViewParts =
